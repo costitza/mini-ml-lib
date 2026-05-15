@@ -92,6 +92,22 @@ Eigen :: VectorXd Dataset :: getRowsAsEigen(int index) const{
 }
 
 
+void Dataset :: setRow(int index, const std :: vector<double>& rowFeatures, double label){
+    if (index < 0 || index >= rows){
+        throw DataIndexException(index, rows);
+    }
+
+
+    // copy features from vector into double matrix
+    for(int j = 0;j < cols; j++){
+        features[index][j] = rowFeatures[j];
+    }
+
+    // set label accordingly
+    labels[index] = label;
+}
+
+
 // dummy until we will have the reader from a csv
 void Dataset :: populateDummyData(){
     // simple linear relation: y = 2x0 + 3 * x1
