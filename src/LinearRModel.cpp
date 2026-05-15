@@ -39,7 +39,7 @@ void LinearRModel :: train(const Dataset& data){
     Eigen :: MatrixXd XT = X.transpose();
     Eigen :: MatrixXd parantheses = XT * X + I;
 
-    Eigen :: VectorXd weights_bias = parantheses.inverse() * XT * Y;
+    Eigen :: VectorXd weights_bias = parantheses.colPivHouseholderQr().solve(XT * Y);
 
     weights = weights_bias.head(f); // first f elements
     bias = weights_bias(f);

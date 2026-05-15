@@ -33,7 +33,7 @@ void LogicRModel :: train(const Dataset& data) {
     }
 
     int epochs = this -> getHyperparameters().getEpochs();
-    int lr = this -> getHyperparameters().getLearningRate();
+    double lr = this -> getHyperparameters().getLearningRate();
 
     for (int epoch = 0; epoch < epochs; epoch ++){
         // Z = X*w + b;

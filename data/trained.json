@@ -1,0 +1,18 @@
+{
+    "bias": 0.0,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 5,
+        "learningRate": 0.01
+    },
+    "l2Penalty": 0.0,
+    "model_type": "LinearRModel",
+    "name": "trainermaybe",
+    "weights": [
+        4.249999999999772,
+        0.0,
+        0.0,
+        0.0,
+        0.7500000000002034
+    ]
+}
