@@ -43,6 +43,12 @@ void LinearRModel :: train(const Dataset& data){
 
     weights = weights_bias.head(f); // first f elements
     bias = weights_bias(f);
+
+    Hyperparameters currentHp = this->getHyperparameters();
+    if (currentHp.getInputFeatures() != f) {
+        currentHp.setInputFeatures(f);
+        this->setHyperparameters(currentHp);
+    }
     
     this->setIsTrained(true);
 }
