@@ -32,6 +32,8 @@ public:
 
     void print(std :: ostream& os) const override;
 
+    void setL2Penalty(double p);
+
     // save / load to json
     json serialize() const override;
     void deserialize(const json& j) override;

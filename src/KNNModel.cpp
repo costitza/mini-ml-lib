@@ -158,3 +158,7 @@ int KNNModel::getKNeighbors() const {
 bool KNNModel::getIsClassification() const {
     return isClassification; 
 }
+
+void KNNModel :: setK(int newk){
+    kNeighbors = newk;
+}

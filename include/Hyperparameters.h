@@ -19,6 +19,9 @@ public:
     double getLearningRate() const;
     int getEpochs() const;
 
+    void setLearningRate(double lr) { learningRate = lr; }
+    void setEpochs(int e) { epochs = e; }
+
     // methods for json
     json serialize() const;
     void deserialize(const json& j);

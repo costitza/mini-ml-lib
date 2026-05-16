@@ -47,7 +47,7 @@ public:
     Hyperparameters getHyperparameters() const;
     void setIsTrained(const bool a);
 
-    
+    void setHyperparameters(const Hyperparameters& hp) { params = hp; }
 
     // static methods
     static int getTotalModels();

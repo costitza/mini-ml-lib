@@ -104,3 +104,7 @@ Eigen :: VectorXd LinearRModel :: getWeights() const{
 double LinearRModel :: getBias() const{
     return bias;
 }
+
+void LinearRModel :: setL2Penalty(double p){
+    l2Penalty = p;
+}

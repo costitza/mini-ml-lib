@@ -35,10 +35,11 @@ void Menu::printHeader() const {
     std::cout << "=========================================\n";
     std::cout << "1. Create a New Model\n";
     std::cout << "2. Train a Model (Dummy Data)\n";
-    std::cout << "3. List Active Models\n";
-    std::cout << "4. Save a Model to File\n";
-    std::cout << "5. Load a Model from File\n";
-    std::cout << "6. Exit\n";
+    std::cout << "3. Modify Model Parameters\n";
+    std::cout << "4. List Active Models\n";
+    std::cout << "5. Save a Model to File\n";
+    std::cout << "6. Load a Model from File\n";
+    std::cout << "7. Exit\n";
     std::cout << "Choose an option: ";
 }
 
@@ -66,10 +67,11 @@ void Menu::run() {
         switch (choice) {
             case 1: createModel(); break;
             case 2: trainModel(); break;
-            case 3: listModels(); break;
-            case 4: saveModel(); break;
-            case 5: loadModel(); break; 
-            case 6: 
+            case 3: modifyModel(); break;
+            case 4: listModels(); break;
+            case 5: saveModel(); break;
+            case 6: loadModel(); break; 
+            case 7: 
                 std::cout << "\nExiting program. Cleaning up memory...\n";
                 isRunning = false; 
                 break;
@@ -314,5 +316,106 @@ void Menu::loadModel() {
         std::cout << "Details: " << e.what() << "\n";
         // delete if error for memory leaks
         delete newModel;
+    }
+}
+
+
+
+void Menu::modifyModel() {
+    if (models.empty()) {
+        std::cout << "\n[Error] No models available to modify.\n";
+        return;
+    }
+
+    listModels();
+    std::cout << "\nEnter the exact ID of the model to modify: ";
+    std::string targetID;
+    std::cin >> targetID;
+
+    MLModel* modelToModify = getModelByID(targetID);
+
+    if (modelToModify == nullptr) {
+        std::cout << "\n[Error] Could not find a model with ID: " << targetID << "\n";
+        return;
+    }
+
+    // get a copy of the current hyperparameters
+    Hyperparameters hp = modelToModify->getHyperparameters();
+
+    std::cout << "\n--- Modifying Model: " << modelToModify->getName() << " ---\n";
+    std::cout << "1. Modify Learning Rate (Current: " << hp.getLearningRate() << ")\n";
+    std::cout << "2. Modify Epochs (Current: " << hp.getEpochs() << ")\n";
+
+    // use dynamic_cast to check what kind of child class
+    LogicRModel* logicModel = dynamic_cast<LogicRModel*>(modelToModify);
+    LinearRModel* linearModel = dynamic_cast<LinearRModel*>(modelToModify);
+    KNNModel* knnModel = dynamic_cast<KNNModel*>(modelToModify);
+
+    // show specific options based on the model type
+    if (logicModel != nullptr) {
+        std::cout << "3. Modify Decision Threshold\n";
+    } else if (linearModel != nullptr) {
+        std::cout << "3. Modify L2 Regularization Penalty\n";
+    } else if (knnModel != nullptr) {
+        std::cout << "3. Modify K (Neighbors)\n";
+    }
+    
+    std::cout << "0. Cancel\n";
+    std::cout << "Select a parameter to change: ";
+    
+    int choice;
+    std::cin >> choice;
+
+    switch (choice) {
+        case 1: {
+            double newLr;
+            std::cout << "Enter new learning rate (e.g., 0.05): ";
+            std::cin >> newLr;
+            hp.setLearningRate(newLr);
+            modelToModify->setHyperparameters(hp); // save it back to the model
+            std::cout << "[Success] Learning rate updated!\n";
+            break;
+        }
+        case 2: {
+            int newEpochs;
+            std::cout << "Enter new epochs (e.g., 500): ";
+            std::cin >> newEpochs;
+            hp.setEpochs(newEpochs);
+            modelToModify->setHyperparameters(hp);
+            std::cout << "[Success] Epochs updated!\n";
+            break;
+        }
+        case 3: {
+            // handle the specific model parameter
+            if (logicModel != nullptr) {
+                double newThreshold;
+                std::cout << "Enter new decision threshold (0.0 - 1.0): ";
+                std::cin >> newThreshold;
+                // Make sure you added this setter to LogicRModel!
+                logicModel->setDecisionThreshold(newThreshold); 
+                std::cout << "[Success] Threshold updated!\n";
+            } 
+            else if (linearModel != nullptr) {
+                double newL2;
+                std::cout << "Enter new L2 Penalty: ";
+                std::cin >> newL2;
+                linearModel->setL2Penalty(newL2); // Add to LinearRModel/Regressor
+                std::cout << "[Success] L2 Penalty updated!\n";
+            }
+            else if (knnModel != nullptr) {
+                int newK;
+                std::cout << "Enter new K value: ";
+                std::cin >> newK;
+                knnModel->setK(newK); // Add to KNNModel
+                std::cout << "[Success] K updated!\n";
+            }
+            break;
+        }
+        case 0:
+            std::cout << "Modification cancelled.\n";
+            break;
+        default:
+            std::cout << "[Error] Invalid choice.\n";
+            break;
     }
 }

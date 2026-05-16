@@ -24,6 +24,7 @@ private:
     void listModels() const;
     void saveModel();
     void loadModel();
+    void modifyModel();
     MLModel* getModelByID(std :: string targetID);
 
     void pause() const;
