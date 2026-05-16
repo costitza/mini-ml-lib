@@ -58,7 +58,7 @@ Dataset DataLoader::loadFromCSV(const std::string& filepath, int labelColumnInde
 
         for (size_t j = 0; j < raw_data[i].size(); j++) {
             // check if this column is the target variable (label)
-            if (j == labelColumnIndex || (labelColumnIndex == -1 && j == raw_data[i].size() - 1)) {
+            if (static_cast<int>(j) == labelColumnIndex || (labelColumnIndex == -1 && j == raw_data[i].size() - 1)) {
                 label = raw_data[i][j];
             } else {
                 features.push_back(raw_data[i][j]);
