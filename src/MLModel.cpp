@@ -55,6 +55,16 @@ std :: ostream& operator<<(std :: ostream& os, const MLModel& model){
     return os;
 }
 
+void MLModel :: addObserver(IObserver* obs) {
+    observers.push_back(obs);
+}
+
+void MLModel :: notifyObservers(const std::string& message) const {
+    for (IObserver* obs : observers) {
+        obs->update(name, message);
+    }
+}
+
 
 
 // methods

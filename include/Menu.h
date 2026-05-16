@@ -2,12 +2,14 @@
 #include <vector>
 #include <string>
 #include "MLModel.h"
+#include "AuditLogger.h"
 
 
 class Menu{
 private:
     std :: vector<MLModel*> models;
     bool isRunning;
+    AuditLogger auditLogger{"data/audit.log"};
 
     // constr + destructor private
     Menu();

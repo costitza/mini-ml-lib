@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <limits>
 #include "DataLoader.h"
+#include "ModelFactory.h"
 
 namespace fs = std :: filesystem;
 
@@ -115,22 +116,18 @@ void Menu::createModel() {
     // Create default hyperparameters for now (5 features, lr=0.01, 100 epochs)
     Hyperparameters hp(5, 0.01, 100);
 
-    MLModel* newModel = nullptr;
+    MLModel* newModel = ModelFactory :: createModel(type, name, hp);
 
-    if (type == 1) {
-        newModel = new LinearRModel(name, hp, 0.0);
-    } else if (type == 2) {
-        newModel = new LogicRModel(name, hp, 2, 0.5);
-    } else if (type == 3) {
-        newModel = new KNNModel(name, hp, 3, true);
-    } else {
-        std::cout << "[Error] Unknown model type.\n";
-        return;
-    }
-
-    models.push_back(newModel);
-    std::cout << "[Success] Created " << newModel->getName() 
+    if(newModel){
+        newModel -> addObserver(&auditLogger);
+        
+        models.push_back(newModel);
+        std::cout << "[Success] Created " << newModel->getName() 
               << " with ID: " << newModel->getModelID() << "\n";
+    }
+    else{
+        std::cout << "[Error] Unknown model type.\n";
+    }
 }
 
 
@@ -293,22 +290,12 @@ void Menu::loadModel() {
         hp.deserialize(j["hyperparameters"]);
     }
 
-    MLModel* newModel = nullptr;
-
-    if (modelType == "LinearRModel") {
-        newModel = new LinearRModel(name, hp, 0.0);
-    } else if (modelType == "LogicRModel") {
-        newModel = new LogicRModel(name, hp, 2, 0.5);
-    } else if (modelType == "KNNModel") {
-        newModel = new KNNModel(name, hp, 3, true);
-    } else {
-        std::cout << "[Error] Unknown or missing model_type in JSON: " << modelType << "\n";
-        return;
-    }
+    MLModel* newModel = ModelFactory :: createModel(modelType, name, hp);
 
     // push model into blank
     try {
         newModel->deserialize(j);
+        newModel -> addObserver(&auditLogger);
         models.push_back(newModel);
         std::cout << "[Success] Model loaded and created with new ID: " << newModel->getModelID() << "\n";
     } catch (const std::exception& e) {

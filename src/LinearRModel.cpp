@@ -10,8 +10,11 @@ LinearRModel :: LinearRModel(std::string modelName, const Hyperparameters& hp, d
 
 // Normal Equation
 void LinearRModel :: train(const Dataset& data){
+
     int n = data.getRows();
     int f = data.getCols();
+
+    this -> notifyObservers("Started training on dataset with " + std::to_string(data.getRows()) + " rows.");
 
     // f + 1 to calculate weigths + bias at the same time
     Eigen :: MatrixXd X(n, f + 1);
@@ -50,7 +53,9 @@ void LinearRModel :: train(const Dataset& data){
         this->setHyperparameters(currentHp);
     }
     
-    this->setIsTrained(true);
+    this -> notifyObservers("Finished training! Final Bias: " + std::to_string(bias));
+
+    this -> setIsTrained(true);
 }
 
 

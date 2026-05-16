@@ -22,6 +22,8 @@ void LogicRModel :: train(const Dataset& data) {
     int n = data.getRows();
     int f = data.getCols();
 
+    this -> notifyObservers("Started training on dataset with " + std::to_string(data.getRows()) + " rows.");
+
     if (weights.size() != f) {
         std::cout << "  -> [Notice] Auto-resizing model from " 
                   << weights.size() << " to " << f << " features to match data.\n";
@@ -73,6 +75,8 @@ void LogicRModel :: train(const Dataset& data) {
         // all this training could be just:
         // forward + calc loss + back propagation in pytorch :(
     }
+
+    this -> notifyObservers("Finished training! Final Bias: " + std::to_string(bias));
 
     this -> setIsTrained(true);
 }
