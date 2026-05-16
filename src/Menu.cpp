@@ -339,83 +339,91 @@ void Menu::modifyModel() {
         return;
     }
 
-    // get a copy of the current hyperparameters
-    Hyperparameters hp = modelToModify->getHyperparameters();
-
-    std::cout << "\n--- Modifying Model: " << modelToModify->getName() << " ---\n";
-    std::cout << "1. Modify Learning Rate (Current: " << hp.getLearningRate() << ")\n";
-    std::cout << "2. Modify Epochs (Current: " << hp.getEpochs() << ")\n";
-
-    // use dynamic_cast to check what kind of child class
+    // cast the models once outside the loop for better performance
     LogicRModel* logicModel = dynamic_cast<LogicRModel*>(modelToModify);
     LinearRModel* linearModel = dynamic_cast<LinearRModel*>(modelToModify);
     KNNModel* knnModel = dynamic_cast<KNNModel*>(modelToModify);
 
-    // show specific options based on the model type
-    if (logicModel != nullptr) {
-        std::cout << "3. Modify Decision Threshold\n";
-    } else if (linearModel != nullptr) {
-        std::cout << "3. Modify L2 Regularization Penalty\n";
-    } else if (knnModel != nullptr) {
-        std::cout << "3. Modify K (Neighbors)\n";
-    }
-    
-    std::cout << "0. Cancel\n";
-    std::cout << "Select a parameter to change: ";
-    
-    int choice;
-    std::cin >> choice;
+    bool keepModifying = true;
 
-    switch (choice) {
-        case 1: {
-            double newLr;
-            std::cout << "Enter new learning rate (e.g., 0.05): ";
-            std::cin >> newLr;
-            hp.setLearningRate(newLr);
-            modelToModify->setHyperparameters(hp); // save it back to the model
-            std::cout << "[Success] Learning rate updated!\n";
-            break;
+    // modification Loop
+    while (keepModifying) {
+        // fetch fresh hyperparameters at the start of every loop 
+        Hyperparameters hp = modelToModify->getHyperparameters();
+
+        std::cout << "\n--- Modifying Model: " << modelToModify->getName() << " ---\n";
+        std::cout << "1. Modify Learning Rate (Current: " << hp.getLearningRate() << ")\n";
+        std::cout << "2. Modify Epochs        (Current: " << hp.getEpochs() << ")\n";
+
+        // show specific options based on the cached model type
+        if (logicModel != nullptr) {
+            std::cout << "3. Modify Decision Threshold\n";
+        } else if (linearModel != nullptr) {
+            std::cout << "3. Modify L2 Regularization Penalty\n";
+        } else if (knnModel != nullptr) {
+            std::cout << "3. Modify K (Neighbors)\n";
         }
-        case 2: {
-            int newEpochs;
-            std::cout << "Enter new epochs (e.g., 500): ";
-            std::cin >> newEpochs;
-            hp.setEpochs(newEpochs);
-            modelToModify->setHyperparameters(hp);
-            std::cout << "[Success] Epochs updated!\n";
-            break;
-        }
-        case 3: {
-            // handle the specific model parameter
-            if (logicModel != nullptr) {
-                double newThreshold;
-                std::cout << "Enter new decision threshold (0.0 - 1.0): ";
-                std::cin >> newThreshold;
-                // Make sure you added this setter to LogicRModel!
-                logicModel->setDecisionThreshold(newThreshold); 
-                std::cout << "[Success] Threshold updated!\n";
-            } 
-            else if (linearModel != nullptr) {
-                double newL2;
-                std::cout << "Enter new L2 Penalty: ";
-                std::cin >> newL2;
-                linearModel->setL2Penalty(newL2); // Add to LinearRModel/Regressor
-                std::cout << "[Success] L2 Penalty updated!\n";
+        
+        std::cout << "0. Done / Return to Main Menu\n";
+        std::cout << "Select a parameter to change: ";
+        
+        int choice;
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1: {
+                double newLr;
+                std::cout << "Enter new learning rate (e.g., 0.01): ";
+                std::cin >> newLr;
+                hp.setLearningRate(newLr);
+                modelToModify->setHyperparameters(hp); 
+                std::cout << "[Success] Learning rate updated to " << newLr << "!\n";
+                break;
             }
-            else if (knnModel != nullptr) {
-                int newK;
-                std::cout << "Enter new K value: ";
-                std::cin >> newK;
-                knnModel->setK(newK); // Add to KNNModel
-                std::cout << "[Success] K updated!\n";
+            case 2: {
+                int newEpochs;
+                std::cout << "Enter new epochs (e.g., 500): ";
+                std::cin >> newEpochs;
+                hp.setEpochs(newEpochs);
+                modelToModify->setHyperparameters(hp);
+                std::cout << "[Success] Epochs updated to " << newEpochs << "!\n";
+                break;
             }
-            break;
+            case 3: {
+                // delegate to the specific model parameter logic
+                if (logicModel != nullptr) {
+                    double newThreshold;
+                    std::cout << "Enter new decision threshold (0.0 - 1.0): ";
+                    std::cin >> newThreshold;
+                    logicModel->setDecisionThreshold(newThreshold); 
+                    std::cout << "[Success] Threshold updated!\n";
+                } 
+                else if (linearModel != nullptr) {
+                    double newL2;
+                    std::cout << "Enter new L2 Penalty: ";
+                    std::cin >> newL2;
+                    linearModel->setL2Penalty(newL2); 
+                    std::cout << "[Success] L2 Penalty updated!\n";
+                }
+                else if (knnModel != nullptr) {
+                    int newK;
+                    std::cout << "Enter new K value: ";
+                    std::cin >> newK;
+                    knnModel->setK(newK); 
+                    std::cout << "[Success] K updated!\n";
+                } else {
+                    std::cout << "[Error] Invalid choice for this model type.\n";
+                }
+                break;
+            }
+            case 0:
+                std::cout << "\n[Info] Finished modifying " << modelToModify->getName() << ". Returning to main menu...\n";
+                keepModifying = false;
+                break;
+                
+            default:
+                std::cout << "\n[Error] Invalid choice. Please select a valid number.\n";
+                break;
         }
-        case 0:
-            std::cout << "Modification cancelled.\n";
-            break;
-        default:
-            std::cout << "[Error] Invalid choice.\n";
-            break;
     }
 }
