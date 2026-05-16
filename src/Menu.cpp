@@ -8,6 +8,7 @@
 #include <fstream>
 #include <filesystem>
 #include <limits>
+#include "DataLoader.h"
 
 namespace fs = std :: filesystem;
 
@@ -145,17 +146,64 @@ void Menu::trainModel() {
 
     MLModel* modelToTrain = getModelByID(targetID);
 
-    if (modelToTrain != nullptr) {
-        // Generate dummy data: 100 rows, matching the 5 features in hyperparams
-        Dataset dummyData(100, 5);
-        dummyData.populateDummyData(); 
-
-        std::cout << "\nTraining model " << targetID << "...\n";
-        
-        modelToTrain->train(dummyData); 
-    } else {
+    if (modelToTrain == nullptr) {
         std::cout << "\n[Error] Could not find a model with ID: " << targetID << "\n";
+        return;
     }
+
+    std::cout << "\n--- Select Data Source ---\n";
+    std::cout << "1. Use auto-generated Dummy Data\n";
+    std::cout << "2. Load from CSV file\n";
+    std::cout << "Choice: ";
+    
+    int dataChoice;
+    std::cin >> dataChoice;
+
+    // create an empty dataset object locally. 
+    Dataset myData(0, 0); 
+
+    if (dataChoice == 1) {
+        // generate dummy data matching the EXACT features the model expects
+        int expectedFeatures = modelToTrain->getHyperparameters().getInputFeatures();
+        myData = Dataset(100, expectedFeatures);
+        myData.populateDummyData(); 
+        std::cout << "[Info] Dummy data generated (" << expectedFeatures << " features).\n";
+    } 
+    else if (dataChoice == 2) {
+        // load from csv
+        std::string filepath;
+        int labelCol;
+        
+        std::cout << "Enter CSV filepath (e.g., ../data/logic_test.csv): ";
+        std::cin >> filepath;
+        std::cout << "Enter label column index (-1 for last column): ";
+        std::cin >> labelCol;
+        
+        try {
+            myData = DataLoader::loadFromCSV(filepath, labelCol);
+            
+            int modelFeatures = modelToTrain->getHyperparameters().getInputFeatures();
+            if (myData.getCols() != modelFeatures) {
+                std::cout << "\n[Warning] CSV features (" << myData.getCols() 
+                          << ") do not match model's expected features (" << modelFeatures << ")!\n"
+                          << "Training might crash or fail.\n";
+            }
+        } 
+        catch (const std::exception& e) {
+            std::cout << "[Error] " << e.what() << "\n";
+            return;
+        }
+    } 
+    else {
+        std::cout << "[Error] Invalid choice. Aborting training.\n";
+        return;
+    }
+
+
+    std::cout << "\nTraining model " << targetID << "...\n";
+    modelToTrain->train(myData); 
+    
+    std::cout << "[Success] Training complete!\n";
 }
 
 
