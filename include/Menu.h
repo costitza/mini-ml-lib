@@ -9,7 +9,7 @@ class Menu{
 private:
     std :: vector<MLModel*> models;
     bool isRunning;
-    AuditLogger auditLogger{"data/audit.log"};
+    AuditLogger auditLogger;
 
     // constr + destructor private
     Menu();
