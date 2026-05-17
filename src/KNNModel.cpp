@@ -52,12 +52,14 @@ KNNModel::~KNNModel() {
 // train + predict methods
 // for training we just save the dataset => lazy learner
 void KNNModel :: train(const Dataset& data) {
+    this -> notifyObservers("Started training (lazy loading) with " + std::to_string(data.getRows()) + " points.");
     delete savedData;
 
     // using copy constructor for data
     savedData = new Dataset(data);
 
     this -> setIsTrained(true);
+    this -> notifyObservers("Finished training! Model is now ready for prediction.");
 }
 
 

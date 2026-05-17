@@ -75,6 +75,7 @@ void Menu::createModel() {
     if(newModel){
         newModel -> addObserver(&auditLogger);
         modelManager.addModel(newModel);
+        newModel->notifyObservers("Model manually created via menu.");
         UIUtils::printSuccess("Created " + newModel->getName() + " with ID: " + newModel->getModelID());
     }
     else{
@@ -118,6 +119,7 @@ void Menu::trainModel() {
         int expectedFeatures = modelToTrain->getHyperparameters().getInputFeatures();
         myData = Dataset(100, expectedFeatures);
         myData.populateDummyData(); 
+        modelToTrain->notifyObservers("Selected auto-generated dummy data for training.");
         UIUtils::printInfo("Dummy data generated (" + std::to_string(expectedFeatures) + " features).");
     } 
     else if (dataChoice == 2) {
@@ -127,6 +129,7 @@ void Menu::trainModel() {
         
         try {
             myData = DataLoader::loadFromCSV(fullPath, labelCol);
+            modelToTrain->notifyObservers("Selected CSV file '" + filename + "' for training.");
             
             int modelFeatures = modelToTrain->getHyperparameters().getInputFeatures();
             if (myData.getCols() != modelFeatures) {
@@ -178,6 +181,7 @@ void Menu::saveModel() {
         json j = modelToSave->serialize(); 
         file << j.dump(4); 
         file.close();
+        modelToSave->notifyObservers("Model serialized and saved to " + fullPath);
         UIUtils::printSuccess("Model " + modelToSave->getModelID() + " saved to " + fullPath);
     } else {
         UIUtils::printError("Could not open file for writing at " + fullPath);
@@ -218,6 +222,7 @@ void Menu::loadModel() {
         newModel->deserialize(j);
         newModel -> addObserver(&auditLogger);
         modelManager.addModel(newModel);
+        newModel->notifyObservers("Model successfully loaded and deserialized from " + fullPath);
         UIUtils::printSuccess("Model loaded and created with new ID: " + newModel->getModelID());
     } catch (const std::exception& e) {
         UIUtils::printError(std::string("Failed to deserialize: ") + e.what());
@@ -257,6 +262,7 @@ void Menu::modifyModel() {
                 double newLr = UIUtils::getDoubleInput("Enter new learning rate (e.g., 0.01): ");
                 hp.setLearningRate(newLr);
                 modelToModify->setHyperparameters(hp); 
+                modelToModify->notifyObservers("Updated Learning Rate to " + std::to_string(newLr));
                 UIUtils::printSuccess("Learning rate updated!");
                 break;
             }
@@ -264,6 +270,7 @@ void Menu::modifyModel() {
                 int newEpochs = UIUtils::getIntInput("Enter new epochs (e.g., 500): ");
                 hp.setEpochs(newEpochs);
                 modelToModify->setHyperparameters(hp);
+                modelToModify->notifyObservers("Updated Epochs to " + std::to_string(newEpochs));
                 UIUtils::printSuccess("Epochs updated!");
                 break;
             }
@@ -271,16 +278,19 @@ void Menu::modifyModel() {
                 if (logicModel != nullptr) {
                     double newThreshold = UIUtils::getDoubleInput("Enter new decision threshold (0.0 - 1.0): ");
                     logicModel->setDecisionThreshold(newThreshold); 
+                    logicModel->notifyObservers("Updated Decision Threshold to " + std::to_string(newThreshold));
                     UIUtils::printSuccess("Threshold updated!");
                 } 
                 else if (linearModel != nullptr) {
                     double newL2 = UIUtils::getDoubleInput("Enter new L2 Penalty: ");
                     linearModel->setL2Penalty(newL2); 
+                    linearModel->notifyObservers("Updated L2 Penalty to " + std::to_string(newL2));
                     UIUtils::printSuccess("L2 Penalty updated!");
                 }
                 else if (knnModel != nullptr) {
                     int newK = UIUtils::getIntInput("Enter new K value: ");
                     knnModel->setK(newK); 
+                    knnModel->notifyObservers("Updated K value to " + std::to_string(newK));
                     UIUtils::printSuccess("K updated!");
                 } else {
                     UIUtils::printError("Invalid choice for this model type.");
@@ -315,6 +325,7 @@ void Menu::predictModel() {
     Dataset testData(0, 0);
     try {
         testData = DataLoader::loadFromCSV(fullPath, labelCol);
+        model->notifyObservers("Started batch prediction on CSV file: " + filename);
     } catch (const std::exception& e) {
         UIUtils::printError(e.what());
         return;
@@ -366,9 +377,11 @@ void Menu::predictModel() {
 
     if (isClassification) {
         double accuracy = (double)correct / n * 100.0;
+        model->notifyObservers("Batch prediction completed. Accuracy: " + std::to_string(accuracy) + "%");
         std::cout << "\n>>> Final Accuracy Score: " << accuracy << "%\n";
     } else {
         double mse = totalError / n;
+        model->notifyObservers("Batch prediction completed. MSE: " + std::to_string(mse));
         std::cout << "\n>>> Final MSE Score: " << mse << "\n";
     }
 }
