@@ -1,0 +1,15 @@
+{
+    "bias": 4.180919050517349,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 2,
+        "learningRate": 0.01
+    },
+    "l2Penalty": 0.0,
+    "model_type": "LinearRModel",
+    "name": "balacean",
+    "weights": [
+        2.0931223371880723,
+        2.8791844187461937
+    ]
+}

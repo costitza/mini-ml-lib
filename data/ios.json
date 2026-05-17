@@ -1,0 +1,15 @@
+{
+    "bias": -0.019125400772624018,
+    "decisionThreshold": 0.5,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 2,
+        "learningRate": 0.01
+    },
+    "model_type": "LogicRModel",
+    "name": "iosub",
+    "weights": [
+        0.16754004055459631,
+        0.1604148688651227
+    ]
+}
