@@ -26,6 +26,7 @@ private:
     void saveModel();
     void loadModel();
     void modifyModel();
+    void predictModel();
 
 public:
     static Menu& getInstance();

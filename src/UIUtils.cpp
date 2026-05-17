@@ -12,12 +12,13 @@ void UIUtils::printHeader(int totalModels) {
     std::cout << "          Total Models: " << totalModels << "\n";
     std::cout << "=========================================\n";
     std::cout << "1. Create a New Model\n";
-    std::cout << "2. Train a Model (Dummy Data)\n";
+    std::cout << "2. Train a Model\n";
     std::cout << "3. Modify Model Parameters\n";
     std::cout << "4. List Active Models\n";
     std::cout << "5. Save a Model to File\n";
     std::cout << "6. Load a Model from File\n";
-    std::cout << "7. Exit\n";
+    std::cout << "7. Predict on CSV\n";
+    std::cout << "8. Exit\n";
     std::cout << "Choose an option: ";
 }
 

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <filesystem>
 #include <limits>
+#include <cmath>
 
 namespace fs = std :: filesystem;
 
@@ -41,7 +42,8 @@ void Menu::run() {
             case 4: listModels(); break;
             case 5: saveModel(); break;
             case 6: loadModel(); break; 
-            case 7: 
+            case 7: predictModel(); break;
+            case 8: 
                 std::cout << "\nExiting program. Cleaning up memory...\n";
                 isRunning = false; 
                 break;
@@ -65,8 +67,8 @@ void Menu::createModel() {
 
     std::string name = UIUtils::getStringInput("Enter a name for the model: ");
 
-    // Create default hyperparameters for now (5 features, lr=0.01, 100 epochs)
-    Hyperparameters hp(5, 0.01, 100);
+    // Create default hyperparameters for now (2 features to match sample files, lr=0.01, 100 epochs)
+    Hyperparameters hp(2, 0.01, 100);
 
     MLModel* newModel = ModelFactory :: createModel(type, name, hp);
 
@@ -294,5 +296,79 @@ void Menu::modifyModel() {
                 UIUtils::printError("Invalid choice.");
                 break;
         }
+    }
+}
+
+void Menu::predictModel() {
+    MLModel* model = selectModel(modelManager, "predict");
+    if (!model) return;
+
+    if (!model->getIsTrained()) {
+        UIUtils::printError("Model must be trained before predicting.");
+        return;
+    }
+
+    std::string filename = UIUtils::getStringInput("Enter CSV filename to predict on (e.g., test.csv): ");
+    std::string fullPath = "../data/" + filename;
+    int labelCol = UIUtils::getIntInput("Enter label column index (-1 for last column): ");
+
+    Dataset testData(0, 0);
+    try {
+        testData = DataLoader::loadFromCSV(fullPath, labelCol);
+    } catch (const std::exception& e) {
+        UIUtils::printError(e.what());
+        return;
+    }
+
+    std::string outFilename = UIUtils::getStringInput("Enter output filename for predictions (e.g., results.csv): ");
+    std::string outPath = "../data/" + outFilename;
+    std::ofstream outFile(outPath);
+
+    if (!outFile.is_open()) {
+        UIUtils::printError("Could not open output file for writing.");
+        return;
+    }
+
+    int correct = 0;
+    double totalError = 0;
+    int n = testData.getRows();
+
+    // Headers
+    outFile << "Row,TrueLabel,Prediction\n";
+
+    bool isClassification = false;
+    if (auto* knn = dynamic_cast<KNNModel*>(model)) {
+        isClassification = knn->getIsClassification();
+    } else if (dynamic_cast<Classifier*>(model)) {
+        isClassification = true;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        Eigen::VectorXd row = testData.getRowsAsEigen(i);
+        double trueLabel = testData.getLabel(i);
+        double prediction = model->predict(row);
+
+        outFile << i << "," << trueLabel << "," << prediction << "\n";
+
+        if (isClassification) {
+            // For classification, check if equal (rounded for safety with doubles)
+            if (std::abs(prediction - trueLabel) < 1e-5) {
+                correct++;
+            }
+        } else {
+            // Regression
+            totalError += std::pow(prediction - trueLabel, 2);
+        }
+    }
+    outFile.close();
+
+    UIUtils::printSuccess("Predictions saved to " + outPath);
+
+    if (isClassification) {
+        double accuracy = (double)correct / n * 100.0;
+        std::cout << "\n>>> Final Accuracy Score: " << accuracy << "%\n";
+    } else {
+        double mse = totalError / n;
+        std::cout << "\n>>> Final MSE Score: " << mse << "\n";
     }
 }
