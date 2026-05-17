@@ -1,76 +1,73 @@
 # ML mini library for predictive models
 
-- from-scratch
-- lightweight
-- educational purpose Machine Learning library built entirely in modern C++. 
+A lightweight, from-scratch Machine Learning library built with modern C++ (C++20). This project is designed for educational purposes to demonstrate the internal mechanics of fundamental ML algorithms without relying on high-level frameworks like scikit-learn or PyTorch.
 
-This project was built to explore how fundamental ML algorithms work under the hood without relying on Python libraries like scikit-learn / Pytorch. It features a fully interactive terminal menu that lets you create models, train them, and save/load their states in json files.
+## Core Models
 
-## Contents of project 
+The library currently supports the following models:
+* **Linear Regression:** Predicts continuous numerical values using the Normal Equation and matrix operations.
+* **Logistic Regression:** A binary classifier implemented with a sigmoid activation function and gradient-based updates.
+* **K-Nearest Neighbors (KNN):** A versatile lazy learner supporting both classification (via majority vote) and regression (via mean averaging).
 
-Currently, the library supports three foundational models:
-* **Linear Regression:** For predicting continuous numerical values using matrix operations.
-* **Logistic Regression:** A binary classifier built with a custom sigmoid activation function.
-* **K-Nearest Neighbors (KNN):** A flexible "lazy learner" that dynamically supports *both* classification (majority vote) and regression (mean averaging).
+## Key Features
 
-**NOTE:** More classes of models and complexity are expected to be added.
+### Interactive CLI & Menu
+A terminal-based interface provides full control over the model lifecycle. The menu system is built for resilience, featuring robust input validation and clear feedback.
 
-### Key features
-* **Interactive CLI:** A terminal-based menu to manage your models in real-time.
-* **Save & Load:** Models serialize their learned weights, hyperparameters, and types into clean JSON files (stored in a `data/` folder). You can close the app, come back later, and load your exact model back into memory.
-* **Auto-Detection:** When loading a JSON file, the library automatically figures out what kind of model it is and rebuilds it for you.
-* **Safe Math:** Built-in error handling prevents the program from crashing if you try to multiply mismatched matrices or predict with an untrained model.
-* **Modular OOP Architecture:** Designed with strict Object-Oriented principles like polymorphism and virtual inheritance. The codebase is highly modular, meaning you can easily drop in new models or expand the library without tearing apart the core math engine.
+### Modular OOP Architecture
+The codebase follows strict Object-Oriented principles, utilizing polymorphism, virtual inheritance, and specialized manager classes:
+* **ModelManager:** Handles model storage, lifecycle, and ID-based searching.
+* **UIUtils:** Centralizes terminal interaction, input parsing, and consistent formatting.
+* **ModelFactory:** Manages the instantiation of different model types from a unified interface.
 
-## Tech stack & dependencies
+### Persistent Storage (Save/Load)
+Models can be serialized into JSON format, preserving their learned weights, hyperparameters, and specific configurations.
+* **Serialization:** Saves the complete state to the `data/` directory.
+* **Auto-Reconstruction:** When loading, the library automatically detects the model type and restores it to its exact trained state.
 
-This project uses two header-only libraries (included in the `external/` folder):
-1. **[Eigen](https://eigen.tuxfamily.org/):** Handles all the heavy lifting for linear algebra, matrix multiplication, and Euclidean distances.
-2. **[nlohmann/json](https://github.com/nlohmann/json):** Used to effortlessly parse and save our C++ objects and Eigen matrices into readable text files.
+### Batch Prediction on CSV
+A dedicated feature for evaluating model performance on external data:
+* **Input:** Load any compatible CSV file from the `data/` subdirectory.
+* **Output:** Generates a result CSV with true labels versus model predictions.
+* **Metrics:** Automatically calculates and displays the **Accuracy Score** for classification and **Mean Squared Error (MSE)** for regression.
 
-## How to install project
+### Expanded Audit Logging
+The library implements the Observer pattern to maintain a detailed security and operation log in `data/audit.log`. The system automatically records:
+* Model creation and source data identification.
+* Training start/finish events and specific file sources.
+* Real-time hyperparameter modifications.
+* Serialization and deserialization paths.
+* Final performance metrics from batch predictions.
 
-**1. Clone the repository and navigate to the folder:**
-```bash
-git clone <your-repo-url>
-cd ml-eigenlib-cxx
-```
+## Technical Stack
 
-**2. Create a build directory:**
-```bash
-mkdir build
-cd build
-```
+* **[Eigen](https://eigen.tuxfamily.org/):** Used for high-performance linear algebra, matrix operations, and vector math.
+* **[nlohmann/json](https://github.com/nlohmann/json):** Facilitates seamless JSON parsing and object serialization.
+* **Standard Filesystem:** Utilizes `std::filesystem` for automatic directory management and cross-platform path handling.
 
-**3. Configure and compile the project:**
-```bash
-cmake ..
-cmake --build .
-```
+## Installation
 
-## 🎮 How to Use
+### Prerequisites
+* CMake 3.15 or higher.
+* A C++20 compatible compiler (GCC 10+, Clang 10+, or MSVC 2019+).
 
-Launch the application by running the executable (`oop.exe` on Windows or `./oop` on Mac/Linux). You will be greeted by an interactive menu designed to manage the lifecycle of your Machine Learning models.
+### Build Instructions
+1. Clone the repository.
+2. Create a build directory: `mkdir build && cd build`.
+3. Configure the project: `cmake ..`.
+4. Compile: `cmake --build .`.
 
-### 1. Create a Model
-Select **Option 1** to instantiate a new model. 
-* Choose between **Linear Regression**, **Logistic Regression**, or **KNN**.
-* Give your model a unique name.
-* The system automatically assigns a unique Hexadecimal ID (e.g., `MOD-A3F1`) and sets up default hyperparameters.
+## How to Use
 
-### 2. Train with Synthetic Data
-Select **Option 2** to train a model. 
-* The system will list all active models and their IDs.
-* Enter the specific **Model ID** you wish to train.
-* The library generates a synthetic `Dataset` that perfectly matches the required input features of your model and executes the training algorithm (e.g., Normal Equation for Linear or Gradient Descent for Logistic).
+Run the executable from the `build` directory. All data operations (CSV files and JSON models) are relative to the `data/` folder.
 
-### 3. Monitoring & Listing
-Select **Option 3** to view all models currently in memory. 
-* Thanks to custom operator overloading, this will print a detailed summary of each model, including its type, training status, bias, and specific settings (like the $K$ value for KNN).
+1. **Create a Model (Option 1):** Instantiate a model and assign it a name. The system generates a unique Hex ID (e.g., `MOD-A3F1`).
+2. **Train a Model (Option 2):** Select a model by ID and choose between synthetic dummy data or an external CSV file.
+3. **Modify Parameters (Option 3):** Tune learning rates, epochs, decision thresholds, or K-neighbors in real-time.
+4. **List Models (Option 4):** View all active models and their current status.
+5. **Save/Load (Options 5 & 6):** Manage persistent storage of your models.
+6. **Predict on CSV (Option 7):** Provide a filename from the `data/` folder to run batch predictions and view performance metrics.
 
-### 4. Persistent Storage (Save/Load)
-* **Save (Option 4):** Enter a Model ID and a filename (e.g., `my_model.json`). The model will be serialized—saving its type, hyperparameters, and learned weights—into the `data/` directory.
-* **Load (Option 5):** Enter the filename. The library will scan the JSON, **automatically detect the model type**, reconstruct the correct C++ object, and restore its trained state.
+## Error Handling
 
-### 5. Error Handling
-The library is protected by custom exceptions. If you attempt to predict with a model before training it, or if you provide data with mismatched dimensions, the program will catch the error and display a descriptive message instead of crashing.
+The library utilizes a custom exception hierarchy to ensure system stability. It validates matrix dimensions, feature counts, and training states before execution, providing descriptive error messages instead of terminating unexpectedly.
