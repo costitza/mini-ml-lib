@@ -119,11 +119,12 @@ void Menu::trainModel() {
         UIUtils::printInfo("Dummy data generated (" + std::to_string(expectedFeatures) + " features).");
     } 
     else if (dataChoice == 2) {
-        std::string filepath = UIUtils::getStringInput("Enter CSV filepath (e.g., ../data/logic_test.csv): ");
+        std::string filename = UIUtils::getStringInput("Enter CSV filename (e.g., logic_test.csv): ");
+        std::string fullPath = "../data/" + filename;
         int labelCol = UIUtils::getIntInput("Enter label column index (-1 for last column): ");
         
         try {
-            myData = DataLoader::loadFromCSV(filepath, labelCol);
+            myData = DataLoader::loadFromCSV(fullPath, labelCol);
             
             int modelFeatures = modelToTrain->getHyperparameters().getInputFeatures();
             if (myData.getCols() != modelFeatures) {
