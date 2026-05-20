@@ -1,0 +1,6 @@
+[Sun May 17 20:15:19 2026] MODEL [andrei] -> Started training on dataset with 10 rows.
+[Sun May 17 20:15:19 2026] MODEL [andrei] -> Finished training! Final Bias: 20.516717
+[Sun May 17 21:59:30 2026] MODEL [balacean] -> Started training on dataset with 15 rows.
+[Sun May 17 21:59:30 2026] MODEL [balacean] -> Finished training! Final Bias: 4.180919
+[Sun May 17 22:02:02 2026] MODEL [iosub] -> Started training on dataset with 20 rows.
+[Sun May 17 22:02:02 2026] MODEL [iosub] -> Finished training! Final Bias: -0.019125

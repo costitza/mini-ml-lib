@@ -1,0 +1,16 @@
+{
+    "bias": 84.06211025829761,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 3,
+        "learningRate": 0.01
+    },
+    "l2Penalty": 0.0,
+    "model_type": "LinearRModel",
+    "name": "biggy",
+    "weights": [
+        0.1878802885104876,
+        -30.6984111779003,
+        -0.4684887778818061
+    ]
+}

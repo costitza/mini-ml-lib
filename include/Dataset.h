@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/Dense>
+#include <vector>
 
 class Dataset{
     int rows;
@@ -25,6 +26,7 @@ public:
     double getLabel(int index) const;
     // convert c++ array row into eigen vector 
     Eigen :: VectorXd getRowsAsEigen(int index) const;
+    void setRow(int index, const std :: vector<double>& rowFeatures, double label);
 
     void populateDummyData();
 };

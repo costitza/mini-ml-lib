@@ -22,6 +22,22 @@ void LogicRModel :: train(const Dataset& data) {
     int n = data.getRows();
     int f = data.getCols();
 
+    this -> notifyObservers("Started training on dataset with " + std::to_string(data.getRows()) + " rows.");
+
+    if (weights.size() != f) {
+        std::cout << "  -> [Notice] Auto-resizing model from " 
+                  << weights.size() << " to " << f << " features to match data.\n";
+        weights = Eigen::VectorXd::Zero(f);
+        
+        // Update the hyperparameters to reflect reality
+        Hyperparameters currentHp = this->getHyperparameters();
+        currentHp.setInputFeatures(f);
+        this->setHyperparameters(currentHp);
+        
+        bias = 0.0; 
+        this->setIsTrained(false);
+    }
+
     // extract data to eigen :: matrix
     Eigen :: MatrixXd X(n, f);
     Eigen :: VectorXd Y(n);
@@ -33,7 +49,7 @@ void LogicRModel :: train(const Dataset& data) {
     }
 
     int epochs = this -> getHyperparameters().getEpochs();
-    int lr = this -> getHyperparameters().getLearningRate();
+    double lr = this -> getHyperparameters().getLearningRate();
 
     for (int epoch = 0; epoch < epochs; epoch ++){
         // Z = X*w + b;
@@ -59,6 +75,8 @@ void LogicRModel :: train(const Dataset& data) {
         // all this training could be just:
         // forward + calc loss + back propagation in pytorch :(
     }
+
+    this -> notifyObservers("Finished training! Final Bias: " + std::to_string(bias));
 
     this -> setIsTrained(true);
 }

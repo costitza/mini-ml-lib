@@ -2,31 +2,31 @@
 #include <vector>
 #include <string>
 #include "MLModel.h"
-
+#include "AuditLogger.h"
+#include "ModelManager.h"
 
 class Menu{
 private:
-    std :: vector<MLModel*> models;
+    ModelManager modelManager;
     bool isRunning;
+    AuditLogger auditLogger;
 
     // constr + destructor private
     Menu();
-    ~Menu();
+    ~Menu() = default;
 
     // delete copy constr and = operator
     Menu(const Menu&) = delete;
     Menu& operator=(const Menu&) = delete;
 
     // internal ui helpers
-    void printHeader() const;
     void createModel();
     void trainModel();
     void listModels() const;
     void saveModel();
     void loadModel();
-    MLModel* getModelByID(std :: string targetID);
-
-    void pause() const;
+    void modifyModel();
+    void predictModel();
 
 public:
     static Menu& getInstance();

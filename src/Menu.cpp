@@ -4,224 +4,198 @@
 #include "KNNModel.h"
 #include "Dataset.h"
 #include "Hyperparameters.h"
+#include "DataLoader.h"
+#include "ModelFactory.h"
+#include "UIUtils.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <limits>
+#include <cmath>
 
 namespace fs = std :: filesystem;
 
 // private constr
 Menu :: Menu() : isRunning(true) {}
 
-Menu :: ~Menu() {
-    for (MLModel* model : models){
-        delete model;
-    }
-    models.clear();
-}
-
 Menu& Menu :: getInstance(){
     static Menu instance;
     return instance;
 }
 
-
-void Menu::printHeader() const {
-    std::cout << "\n=========================================\n";
-    std::cout << "      Machine Learning Library C++       \n";
-    std::cout << "          Total Models: " << MLModel::getTotalModels() << "\n";
-    std::cout << "=========================================\n";
-    std::cout << "1. Create a New Model\n";
-    std::cout << "2. Train a Model (Dummy Data)\n";
-    std::cout << "3. List Active Models\n";
-    std::cout << "4. Save a Model to File\n";
-    std::cout << "5. Load a Model from File\n";
-    std::cout << "6. Exit\n";
-    std::cout << "Choose an option: ";
-}
-
-
-void Menu::pause() const {
-    std::cout << "\nPress Enter to return to the menu...";
-    // throw away any leftover characters (like the '\n' from previous inputs)
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get(); 
-}
-
-
 void Menu::run() {
-    int choice;
     while (isRunning) {
-        printHeader();
+        UIUtils::printHeader(MLModel::getTotalModels());
         
+        int choice;
         if (!(std::cin >> choice)) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "\n[Error] Invalid input. Please enter a number.\n";
+            UIUtils::printError("Invalid input. Please enter a number.");
             continue;
         }
 
         switch (choice) {
             case 1: createModel(); break;
             case 2: trainModel(); break;
-            case 3: listModels(); break;
-            case 4: saveModel(); break;
-            case 5: loadModel(); break; 
-            case 6: 
+            case 3: modifyModel(); break;
+            case 4: listModels(); break;
+            case 5: saveModel(); break;
+            case 6: loadModel(); break; 
+            case 7: predictModel(); break;
+            case 8: 
                 std::cout << "\nExiting program. Cleaning up memory...\n";
                 isRunning = false; 
                 break;
             default:
-                std::cout << "\n[Error] Invalid choice.\n";
+                UIUtils::printError("Invalid choice.");
                 break;
         }
 
         if(isRunning){
-            pause();
+            UIUtils::pause();
         }
     }
 }
-
-MLModel* Menu :: getModelByID(std :: string targetID){
-    MLModel* modelToSave = nullptr;
-    for (MLModel* model : models) {
-        if (model->getModelID() == targetID) {
-            modelToSave = model;
-            break;
-        }
-    }
-    return modelToSave;
-}
-
 
 void Menu::createModel() {
     std::cout << "\n--- Create Model ---\n";
     std::cout << "1. Linear Regression\n";
     std::cout << "2. Logistic Regression (Classifier)\n";
     std::cout << "3. K-Nearest Neighbors\n";
-    std::cout << "Select type: ";
-    
-    int type;
-    std::cin >> type;
+    int type = UIUtils::getIntInput("Select type: ");
 
-    std::string name;
-    std::cout << "Enter a name for the model: ";
-    std::cin >> name;
+    std::string name = UIUtils::getStringInput("Enter a name for the model: ");
 
-    // Create default hyperparameters for now (5 features, lr=0.01, 100 epochs)
-    Hyperparameters hp(5, 0.01, 100);
+    // Create default hyperparameters for now (2 features to match sample files, lr=0.01, 100 epochs)
+    Hyperparameters hp(2, 0.01, 100);
 
-    MLModel* newModel = nullptr;
+    MLModel* newModel = ModelFactory :: createModel(type, name, hp);
 
-    if (type == 1) {
-        newModel = new LinearRModel(name, hp, 0.0);
-    } else if (type == 2) {
-        newModel = new LogicRModel(name, hp, 2, 0.5);
-    } else if (type == 3) {
-        newModel = new KNNModel(name, hp, 3, true);
-    } else {
-        std::cout << "[Error] Unknown model type.\n";
-        return;
+    if(newModel){
+        newModel -> addObserver(&auditLogger);
+        modelManager.addModel(newModel);
+        newModel->notifyObservers("Model manually created via menu.");
+        UIUtils::printSuccess("Created " + newModel->getName() + " with ID: " + newModel->getModelID());
     }
-
-    models.push_back(newModel);
-    std::cout << "[Success] Created " << newModel->getName() 
-              << " with ID: " << newModel->getModelID() << "\n";
+    else{
+        UIUtils::printError("Unknown model type.");
+    }
 }
 
+MLModel* selectModel(const ModelManager& manager, const std::string& actionName) {
+    if (manager.isEmpty()) {
+        UIUtils::printError("No models available to " + actionName + ".");
+        return nullptr;
+    }
+
+    // List models
+    std::cout << "\n--- Active Models ---\n";
+    for (const auto* model : manager.getModels()) {
+        std::cout << *model << "\n";
+    }
+
+    std::string targetID = UIUtils::getStringInput("\nEnter the exact ID of the model to " + actionName + ": ");
+    MLModel* model = manager.getModelByID(targetID);
+
+    if (model == nullptr) {
+        UIUtils::printError("Could not find a model with ID: " + targetID);
+    }
+    return model;
+}
 
 void Menu::trainModel() {
-    if (models.empty()) {
-        std::cout << "\n[Error] No models available to train.\n";
+    MLModel* modelToTrain = selectModel(modelManager, "train");
+    if (!modelToTrain) return;
+
+    std::cout << "\n--- Select Data Source ---\n";
+    std::cout << "1. Use auto-generated Dummy Data\n";
+    std::cout << "2. Load from CSV file\n";
+    int dataChoice = UIUtils::getIntInput("Choice: ");
+
+    Dataset myData(0, 0); 
+
+    if (dataChoice == 1) {
+        int expectedFeatures = modelToTrain->getHyperparameters().getInputFeatures();
+        myData = Dataset(100, expectedFeatures);
+        myData.populateDummyData(); 
+        modelToTrain->notifyObservers("Selected auto-generated dummy data for training.");
+        UIUtils::printInfo("Dummy data generated (" + std::to_string(expectedFeatures) + " features).");
+    } 
+    else if (dataChoice == 2) {
+        std::string filename = UIUtils::getStringInput("Enter CSV filename (e.g., logic_test.csv): ");
+        std::string fullPath = "../data/" + filename;
+        int labelCol = UIUtils::getIntInput("Enter label column index (-1 for last column): ");
+        
+        try {
+            myData = DataLoader::loadFromCSV(fullPath, labelCol);
+            modelToTrain->notifyObservers("Selected CSV file '" + filename + "' for training.");
+            
+            int modelFeatures = modelToTrain->getHyperparameters().getInputFeatures();
+            if (myData.getCols() != modelFeatures) {
+                std::cout << "\n[Warning] CSV features (" << myData.getCols() 
+                          << ") do not match model's expected features (" << modelFeatures << ")!\n"
+                          << "Training might crash or fail.\n";
+            }
+        } 
+        catch (const std::exception& e) {
+            UIUtils::printError(e.what());
+            return;
+        }
+    } 
+    else {
+        UIUtils::printError("Invalid choice. Aborting training.");
         return;
     }
 
-    listModels(); // Show the user the available IDs
-    std::cout << "\nEnter the exact ID of the model to train (e.g., MOD-A3F1): ";
-    
-    std::string targetID;
-    std::cin >> targetID;
-
-    MLModel* modelToTrain = getModelByID(targetID);
-
-    if (modelToTrain != nullptr) {
-        // Generate dummy data: 100 rows, matching the 5 features in hyperparams
-        Dataset dummyData(100, 5);
-        dummyData.populateDummyData(); 
-
-        std::cout << "\nTraining model " << targetID << "...\n";
-        
-        modelToTrain->train(dummyData); 
-    } else {
-        std::cout << "\n[Error] Could not find a model with ID: " << targetID << "\n";
-    }
+    std::cout << "\nTraining model " << modelToTrain->getModelID() << "...\n";
+    modelToTrain->train(myData); 
+    UIUtils::printSuccess("Training complete!");
 }
 
-
 void Menu::listModels() const {
-    std::cout << "\n--- Active Models ---\n";
-    if (models.empty()) {
-        std::cout << "No models instantiated yet.\n";
+    if (modelManager.isEmpty()) {
+        std::cout << "\nNo models instantiated yet.\n";
         return;
     }
 
+    std::cout << "\n--- Active Models ---\n";
+    const auto& models = modelManager.getModels();
     for(size_t i = 0; i < models.size(); ++i){
         std :: cout << i << ". " << *models[i] << '\n';
     }
 }
 
-
 void Menu::saveModel() {
-    if (models.empty()) {
-        std::cout << "\n[Error] No models available to save.\n";
-        return;
-    }
+    MLModel* modelToSave = selectModel(modelManager, "save");
+    if (!modelToSave) return;
 
-    listModels();
-    std::cout << "\nEnter the exact ID of the model to save: ";
-    std::string targetID;
-    std::cin >> targetID;
+    std::string filename = UIUtils::getStringInput("Enter filename to save to (e.g., model.json): ");
 
-    MLModel* modelToSave = getModelByID(targetID);
+    std::string dataDir = "../data/";
+    fs::create_directories(dataDir);
+    std::string fullPath = dataDir + filename;
 
-    if (modelToSave != nullptr) {
-        std::cout << "Enter filename to save to (e.g., model.json): ";
-        std::string filename;
-        std::cin >> filename;
-
-        std::string dataDir = "../data/";
-        fs::create_directories(dataDir);
-        
-        std::string fullPath = dataDir + filename;
-
-        std::ofstream file(fullPath);
-        if (file.is_open()) {
-            json j = modelToSave->serialize(); 
-            file << j.dump(4); 
-            file.close();
-            std::cout << "[Success] Model " << targetID << " saved to " << fullPath << "\n";
-        } else {
-            std::cout << "[Error] Could not open file for writing at " << fullPath << "\n";
-        }
+    std::ofstream file(fullPath);
+    if (file.is_open()) {
+        json j = modelToSave->serialize(); 
+        file << j.dump(4); 
+        file.close();
+        modelToSave->notifyObservers("Model serialized and saved to " + fullPath);
+        UIUtils::printSuccess("Model " + modelToSave->getModelID() + " saved to " + fullPath);
     } else {
-        std::cout << "\n[Error] Could not find a model with ID: " << targetID << "\n";
+        UIUtils::printError("Could not open file for writing at " + fullPath);
     }
 }
 
-
 void Menu::loadModel() {
     std::cout << "\n--- Load Model ---\n";
-    std::cout << "Enter filename to load from (e.g., model.json): ";
-    std::string filename;
-    std::cin >> filename;
-
+    std::string filename = UIUtils::getStringInput("Enter filename to load from (e.g., model.json): ");
     std::string fullPath = "../data/" + filename;
 
     std::ifstream file(fullPath);
-
     if (!file.is_open()) {
-        std::cout << "[Error] Could not open file " << filename << ". Does it exist?\n";
+        UIUtils::printError("Could not open file " + filename + ". Does it exist?");
         return;
     }
 
@@ -229,7 +203,7 @@ void Menu::loadModel() {
     try {
         file >> j;
     } catch (const json::parse_error& e) {
-        std::cout << "[Error] Invalid JSON format: " << e.what() << "\n";
+        UIUtils::printError(std::string("Invalid JSON format: ") + e.what());
         return;
     }
     file.close();
@@ -237,34 +211,177 @@ void Menu::loadModel() {
     std::string modelType = j.value("model_type", "Unknown");
     std::string name = j.value("name", "LoadedModel");
     
-    // create default hyperparameters (they will be overwritten if theyre serialized)
     Hyperparameters hp(5, 0.01, 100);
     if (j.contains("hyperparameters")) {
         hp.deserialize(j["hyperparameters"]);
     }
 
-    MLModel* newModel = nullptr;
+    MLModel* newModel = ModelFactory :: createModel(modelType, name, hp);
 
-    if (modelType == "LinearRModel") {
-        newModel = new LinearRModel(name, hp, 0.0);
-    } else if (modelType == "LogicRModel") {
-        newModel = new LogicRModel(name, hp, 2, 0.5);
-    } else if (modelType == "KNNModel") {
-        newModel = new KNNModel(name, hp, 3, true);
-    } else {
-        std::cout << "[Error] Unknown or missing model_type in JSON: " << modelType << "\n";
+    try {
+        newModel->deserialize(j);
+        newModel -> addObserver(&auditLogger);
+        modelManager.addModel(newModel);
+        newModel->notifyObservers("Model successfully loaded and deserialized from " + fullPath);
+        UIUtils::printSuccess("Model loaded and created with new ID: " + newModel->getModelID());
+    } catch (const std::exception& e) {
+        UIUtils::printError(std::string("Failed to deserialize: ") + e.what());
+        delete newModel;
+    }
+}
+
+void Menu::modifyModel() {
+    MLModel* modelToModify = selectModel(modelManager, "modify");
+    if (!modelToModify) return;
+
+    LogicRModel* logicModel = dynamic_cast<LogicRModel*>(modelToModify);
+    LinearRModel* linearModel = dynamic_cast<LinearRModel*>(modelToModify);
+    KNNModel* knnModel = dynamic_cast<KNNModel*>(modelToModify);
+
+    bool keepModifying = true;
+    while (keepModifying) {
+        Hyperparameters hp = modelToModify->getHyperparameters();
+
+        std::cout << "\n--- Modifying Model: " << modelToModify->getName() << " ---\n";
+        std::cout << "1. Modify Learning Rate (Current: " << hp.getLearningRate() << ")\n";
+        std::cout << "2. Modify Epochs        (Current: " << hp.getEpochs() << ")\n";
+
+        if (logicModel != nullptr) {
+            std::cout << "3. Modify Decision Threshold\n";
+        } else if (linearModel != nullptr) {
+            std::cout << "3. Modify L2 Regularization Penalty\n";
+        } else if (knnModel != nullptr) {
+            std::cout << "3. Modify K (Neighbors)\n";
+        }
+        
+        std::cout << "0. Done / Return to Main Menu\n";
+        int choice = UIUtils::getIntInput("Select a parameter to change: ");
+
+        switch (choice) {
+            case 1: {
+                double newLr = UIUtils::getDoubleInput("Enter new learning rate (e.g., 0.01): ");
+                hp.setLearningRate(newLr);
+                modelToModify->setHyperparameters(hp); 
+                modelToModify->notifyObservers("Updated Learning Rate to " + std::to_string(newLr));
+                UIUtils::printSuccess("Learning rate updated!");
+                break;
+            }
+            case 2: {
+                int newEpochs = UIUtils::getIntInput("Enter new epochs (e.g., 500): ");
+                hp.setEpochs(newEpochs);
+                modelToModify->setHyperparameters(hp);
+                modelToModify->notifyObservers("Updated Epochs to " + std::to_string(newEpochs));
+                UIUtils::printSuccess("Epochs updated!");
+                break;
+            }
+            case 3: {
+                if (logicModel != nullptr) {
+                    double newThreshold = UIUtils::getDoubleInput("Enter new decision threshold (0.0 - 1.0): ");
+                    logicModel->setDecisionThreshold(newThreshold); 
+                    logicModel->notifyObservers("Updated Decision Threshold to " + std::to_string(newThreshold));
+                    UIUtils::printSuccess("Threshold updated!");
+                } 
+                else if (linearModel != nullptr) {
+                    double newL2 = UIUtils::getDoubleInput("Enter new L2 Penalty: ");
+                    linearModel->setL2Penalty(newL2); 
+                    linearModel->notifyObservers("Updated L2 Penalty to " + std::to_string(newL2));
+                    UIUtils::printSuccess("L2 Penalty updated!");
+                }
+                else if (knnModel != nullptr) {
+                    int newK = UIUtils::getIntInput("Enter new K value: ");
+                    knnModel->setK(newK); 
+                    knnModel->notifyObservers("Updated K value to " + std::to_string(newK));
+                    UIUtils::printSuccess("K updated!");
+                } else {
+                    UIUtils::printError("Invalid choice for this model type.");
+                }
+                break;
+            }
+            case 0:
+                UIUtils::printInfo("Finished modifying " + modelToModify->getName() + ". Returning to main menu...");
+                keepModifying = false;
+                break;
+                
+            default:
+                UIUtils::printError("Invalid choice.");
+                break;
+        }
+    }
+}
+
+void Menu::predictModel() {
+    MLModel* model = selectModel(modelManager, "predict");
+    if (!model) return;
+
+    if (!model->getIsTrained()) {
+        UIUtils::printError("Model must be trained before predicting.");
         return;
     }
 
-    // push model into blank
+    std::string filename = UIUtils::getStringInput("Enter CSV filename to predict on (e.g., test.csv): ");
+    std::string fullPath = "../data/" + filename;
+    int labelCol = UIUtils::getIntInput("Enter label column index (-1 for last column): ");
+
+    Dataset testData(0, 0);
     try {
-        newModel->deserialize(j);
-        models.push_back(newModel);
-        std::cout << "[Success] Model loaded and created with new ID: " << newModel->getModelID() << "\n";
+        testData = DataLoader::loadFromCSV(fullPath, labelCol);
+        model->notifyObservers("Started batch prediction on CSV file: " + filename);
     } catch (const std::exception& e) {
-        std::cout << "[Error] Failed to deserialize. Did you pick the wrong model type?\n";
-        std::cout << "Details: " << e.what() << "\n";
-        // delete if error for memory leaks
-        delete newModel;
+        UIUtils::printError(e.what());
+        return;
+    }
+
+    std::string outFilename = UIUtils::getStringInput("Enter output filename for predictions (e.g., results.csv): ");
+    std::string outPath = "../data/" + outFilename;
+    std::ofstream outFile(outPath);
+
+    if (!outFile.is_open()) {
+        UIUtils::printError("Could not open output file for writing.");
+        return;
+    }
+
+    int correct = 0;
+    double totalError = 0;
+    int n = testData.getRows();
+
+    // Headers
+    outFile << "Row,TrueLabel,Prediction\n";
+
+    bool isClassification = false;
+    if (auto* knn = dynamic_cast<KNNModel*>(model)) {
+        isClassification = knn->getIsClassification();
+    } else if (dynamic_cast<Classifier*>(model)) {
+        isClassification = true;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        Eigen::VectorXd row = testData.getRowsAsEigen(i);
+        double trueLabel = testData.getLabel(i);
+        double prediction = model->predict(row);
+
+        outFile << i << "," << trueLabel << "," << prediction << "\n";
+
+        if (isClassification) {
+            // For classification, check if equal (rounded for safety with doubles)
+            if (std::abs(prediction - trueLabel) < 1e-5) {
+                correct++;
+            }
+        } else {
+            // Regression
+            totalError += std::pow(prediction - trueLabel, 2);
+        }
+    }
+    outFile.close();
+
+    UIUtils::printSuccess("Predictions saved to " + outPath);
+
+    if (isClassification) {
+        double accuracy = (double)correct / n * 100.0;
+        model->notifyObservers("Batch prediction completed. Accuracy: " + std::to_string(accuracy) + "%");
+        std::cout << "\n>>> Final Accuracy Score: " << accuracy << "%\n";
+    } else {
+        double mse = totalError / n;
+        model->notifyObservers("Batch prediction completed. MSE: " + std::to_string(mse));
+        std::cout << "\n>>> Final MSE Score: " << mse << "\n";
     }
 }

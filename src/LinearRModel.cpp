@@ -10,8 +10,11 @@ LinearRModel :: LinearRModel(std::string modelName, const Hyperparameters& hp, d
 
 // Normal Equation
 void LinearRModel :: train(const Dataset& data){
+
     int n = data.getRows();
     int f = data.getCols();
+
+    this -> notifyObservers("Started training on dataset with " + std::to_string(data.getRows()) + " rows.");
 
     // f + 1 to calculate weigths + bias at the same time
     Eigen :: MatrixXd X(n, f + 1);
@@ -39,12 +42,20 @@ void LinearRModel :: train(const Dataset& data){
     Eigen :: MatrixXd XT = X.transpose();
     Eigen :: MatrixXd parantheses = XT * X + I;
 
-    Eigen :: VectorXd weights_bias = parantheses.inverse() * XT * Y;
+    Eigen :: VectorXd weights_bias = parantheses.colPivHouseholderQr().solve(XT * Y);
 
     weights = weights_bias.head(f); // first f elements
     bias = weights_bias(f);
+
+    Hyperparameters currentHp = this->getHyperparameters();
+    if (currentHp.getInputFeatures() != f) {
+        currentHp.setInputFeatures(f);
+        this->setHyperparameters(currentHp);
+    }
     
-    this->setIsTrained(true);
+    this -> notifyObservers("Finished training! Final Bias: " + std::to_string(bias));
+
+    this -> setIsTrained(true);
 }
 
 
@@ -103,4 +114,8 @@ Eigen :: VectorXd LinearRModel :: getWeights() const{
 
 double LinearRModel :: getBias() const{
     return bias;
+}
+
+void LinearRModel :: setL2Penalty(double p){
+    l2Penalty = p;
 }

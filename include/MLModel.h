@@ -3,15 +3,19 @@
 #include "Hyperparameters.h"
 #include "Dataset.h"
 #include <iostream>
+#include "IObserver.h"
 
 #include <Eigen/Dense>
 #include <nlohmann/json.hpp>
+#include <vector>
 
 using json = nlohmann :: json;
 
 
 class MLModel{
 protected:
+    std :: vector<IObserver*> observers;
+
     std :: string name;
     bool isTrained;
     Hyperparameters params;
@@ -47,7 +51,13 @@ public:
     Hyperparameters getHyperparameters() const;
     void setIsTrained(const bool a);
 
-    
+    void setHyperparameters(const Hyperparameters& hp) { params = hp; }
+
+
+    // observer logic
+    void addObserver(IObserver* obs);
+
+    void notifyObservers(const std::string& message) const;
 
     // static methods
     static int getTotalModels();

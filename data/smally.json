@@ -1,0 +1,15 @@
+{
+    "bias": -0.06649212691477524,
+    "decisionThreshold": 0.5,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 2,
+        "learningRate": 0.01
+    },
+    "model_type": "LogicRModel",
+    "name": "smally",
+    "weights": [
+        0.18602760060159126,
+        0.16655474349023586
+    ]
+}

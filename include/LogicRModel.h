@@ -39,5 +39,6 @@ public:
     Eigen :: VectorXd getWeights() const;
 
     double getBias() const;
+    void setDecisionThreshold(double t) { decisionThreshold = t; } 
 
 };

@@ -1,0 +1,15 @@
+{
+    "bias": 20.516717325227575,
+    "hyperparameters": {
+        "epochs": 50,
+        "inputFeatures": 2,
+        "learningRate": 0.001
+    },
+    "l2Penalty": 0.0,
+    "model_type": "LinearRModel",
+    "name": "salary_predictor",
+    "weights": [
+        7.604863221884439,
+        2.3860182370821637
+    ]
+}

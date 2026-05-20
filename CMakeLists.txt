@@ -27,6 +27,11 @@ add_executable(${PROJECT_NAME}
     src/KNNModel.cpp 
     src/Dataset.cpp 
     src/Hyperparameters.cpp
+    src/DataLoader.cpp
+    src/ModelFactory.cpp
+    src/AuditLogger.cpp
+    src/ModelManager.cpp
+    src/UIUtils.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 # look for external folder for headers

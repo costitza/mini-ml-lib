@@ -47,5 +47,5 @@ public:
     // getters / setters
     int getKNeighbors() const;
     bool getIsClassification() const;
-    
+    void setK(int newk);
 };
