@@ -39,6 +39,25 @@ The library implements the Observer pattern to maintain a detailed security and 
 * Serialization and deserialization paths.
 * Final performance metrics from batch predictions.
 
+## Design Patterns
+
+The project leverages several industry-standard design patterns to ensure a clean, maintainable, and scalable architecture:
+
+### 1. Singleton Pattern
+* **Menu:** The main application controller is implemented as a Singleton. This ensures a centralized state for the CLI interface and prevents multiple concurrent menu instances from conflicting with the `ModelManager`.
+
+### 2. Factory Method Pattern
+* **ModelFactory:** Decouples model creation from the main application logic. It provides a unified interface for instantiating different types of `MLModel` subclasses based on input parameters or serialized data.
+
+### 3. Observer Pattern
+* **IObserver & MLModel:** Implements a decoupled notification system. The `AuditLogger` acts as a concrete observer that monitors models for state changes, training events, and parameter updates without the models needing to know about the logging implementation.
+
+### 4. Strategy Pattern
+* **MLModel Interface:** The `train()` and `predict()` methods define a generic interface for machine learning "strategies." This allows the application to treat different algorithms interchangeably, facilitating easy extension with new models.
+
+### 5. Template Method Pattern
+* **Model Hierarchy:** The `MLModel` base class establishes a fixed skeleton for the model lifecycle (initialization, ID generation, observer management) while delegating specific algorithmic implementations to subclasses.
+
 ## Technical Stack
 
 * **[Eigen](https://eigen.tuxfamily.org/):** Used for high-performance linear algebra, matrix operations, and vector math.
