@@ -1,0 +1,15 @@
+{
+    "bias": 26.731620314389318,
+    "hyperparameters": {
+        "epochs": 100,
+        "inputFeatures": 2,
+        "learningRate": 0.01
+    },
+    "l2Penalty": 0.0,
+    "model_type": "LinearRModel",
+    "name": "final",
+    "weights": [
+        -3.1891777509067327,
+        0.5640870616685714
+    ]
+}

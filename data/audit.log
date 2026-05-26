@@ -4,3 +4,30 @@
 [Sun May 17 21:59:30 2026] MODEL [balacean] -> Finished training! Final Bias: 4.180919
 [Sun May 17 22:02:02 2026] MODEL [iosub] -> Started training on dataset with 20 rows.
 [Sun May 17 22:02:02 2026] MODEL [iosub] -> Finished training! Final Bias: -0.019125
+[Mon May 25 12:01:22 2026] MODEL [final] -> Model manually created via menu.
+[Mon May 25 12:01:47 2026] MODEL [final] -> Updated Learning Rate to 0.005000
+[Mon May 25 12:01:56 2026] MODEL [final] -> Updated Epochs to 500
+[Mon May 25 12:02:26 2026] MODEL [final] -> Selected CSV file 'class_final.csv' for training.
+[Mon May 25 12:02:26 2026] MODEL [final] -> Started training on dataset with 20 rows.
+[Mon May 25 12:02:26 2026] MODEL [final] -> Finished training! Final Bias: -0.173774
+[Mon May 25 12:02:51 2026] MODEL [final] -> Model serialized and saved to ../data/predictor_class
+[Mon May 25 12:03:17 2026] MODEL [final] -> Model manually created via menu.
+[Mon May 25 12:04:21 2026] MODEL [final] -> Selected CSV file 'regress_final.csv' for training.
+[Mon May 25 12:04:21 2026] MODEL [final] -> Started training on dataset with 10 rows.
+[Mon May 25 12:04:21 2026] MODEL [final] -> Finished training! Final Bias: 26.731620
+[Mon May 25 12:04:47 2026] MODEL [final] -> Model serialized and saved to ../data/predictor_regress.json
+[Mon May 25 12:05:16 2026] MODEL [final] -> Started batch prediction on CSV file: regress_final.csv
+[Mon May 25 12:05:23 2026] MODEL [final] -> Batch prediction completed. MSE: 0.582077
+[Mon May 25 12:06:07 2026] MODEL [final] -> Started batch prediction on CSV file: class_final.csv
+[Mon May 25 12:06:15 2026] MODEL [final] -> Batch prediction completed. Accuracy: 60.000000%
+[Mon May 25 12:08:49 2026] MODEL [mathew] -> Model manually created via menu.
+[Mon May 25 12:09:09 2026] MODEL [mathew] -> Updated Learning Rate to 0.010000
+[Mon May 25 12:09:14 2026] MODEL [mathew] -> Updated Epochs to 10000
+[Mon May 25 12:09:37 2026] MODEL [mathew] -> Selected CSV file 'class_final.csv' for training.
+[Mon May 25 12:09:37 2026] MODEL [mathew] -> Started training on dataset with 20 rows.
+[Mon May 25 12:09:37 2026] MODEL [mathew] -> Finished training! Final Bias: -4.815562
+[Mon May 25 12:09:53 2026] MODEL [mathew] -> Started batch prediction on CSV file: class_final.csv
+[Mon May 25 12:09:57 2026] MODEL [mathew] -> Batch prediction completed. Accuracy: 95.000000%
+[Mon May 25 12:12:17 2026] MODEL [mathew] -> Model serialized and saved to ../data/class_mathew.json
+[Mon May 25 12:37:33 2026] MODEL [final] -> Model successfully loaded and deserialized from ../data/predictor_regress.json
+[Mon May 25 12:37:59 2026] MODEL [final] -> Model successfully loaded and deserialized from ../data/predictor_class.json
